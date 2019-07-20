@@ -1,0 +1,104 @@
+---
+title: "Final_Project_2"
+author: "Meher Mankikar"
+date: "July 12, 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## R Markdown
+Introduction:
+
+In this project, I used the Iris Species data set. This data set includes data about the Iris flower's Species, Petal Length, Petal Width, Sepal Length and Sepal Width. Using this data, I aimed to use data science techniques in order to analyze the data of different Iris species. I then used this model to predict the species of flowers based on the other factors for a test set. 
+
+Method/Analysis: 
+
+First the Iris Species data set was loaded. 
+```{r}
+
+if(!require(readr)) install.packages("readr", repos = "http://cran.us.r-project.org")
+library(readr)
+
+iris_data <- read_csv("/Users/mehermankikar/Downloads/iris-species/Iris.csv")
+iris_data
+colnames(iris_data) <- c("ID", "Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species")
+str(iris_data)
+
+```
+
+Then, the data was split into training and tests sets. 
+```{r}
+
+library(caret)
+##Making test and train sets
+index <- createDataPartition(iris_data$Species, p = 0.50, list = FALSE)
+iris_train <- iris_data[index,]
+str(iris_train)
+iris_test <- iris_data[-index,]
+str(iris_test)
+
+```
+
+Data Visualization: 
+
+Next, the data was examined through the summary method. A boxplot was also created to better visualize the data. 
+```{r}
+
+##Looking at the Data
+summary(iris_train)
+
+x <- iris_train[,1:4]
+y <- iris_train[,5]
+par(mfrow=c(1,4))
+for(i in 1:4) {
+  boxplot(x[i], main=names(iris_train)[i])
+}
+
+```
+
+
+After analyzing the data, three models were created that would be used for prediction of the flower species later. 
+```{r}
+
+##Creating Models
+
+library(caret)
+control <- trainControl(method='cv', number=10)
+metric <- 'Accuracy'
+#LDA
+set.seed(101)
+fit.lda <- train(Species~., data=iris_train, method='rf', 
+                 trControl=control, metric = metric)
+#KNN
+set.seed(101)
+fit.knn <- train(Species~., data=iris_train, method='knn', 
+                 trControl=control, metric=metric)
+#RF
+set.seed(101)
+fit.rf <- train(Species~., data=iris_train, method='ranger', 
+                trControl=control, metric=metric)
+
+iris.results <- resamples(list(lda=fit.lda, knn=fit.knn,rf=fit.rf))
+
+```
+
+Results: 
+
+Finally, the results of the three models were seen and the models were used to make predictions of flower species on the test set. The Accuracy of the model was 98.67%.
+```{r}
+
+# Results
+summary(iris.results)
+
+#Making Predictions and Testing Accuracy
+iris_prediction <- predict(fit.lda, iris_test)
+confusionMatrix(table(iris_prediction, iris_test$Species))
+
+```
+
+Conclusion: 
+In this project, I successfully separated the Iris Species data set and analyzed the data. With this information, a model was created to use the different features of the flower to predict the species. The model was tested on the test set and had an accuracy of 98.67%. In the future, with a larger data set and more factors for each flower, a more accurate model could be created. 
